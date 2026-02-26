@@ -1,0 +1,4 @@
+(tests
+  (names empty_token broken_section correct_parse specification)
+  (libraries inifiles pcre2)
+  (deps (glob_files *.ini)))
