@@ -18,11 +18,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *)
 
-
-open Pcre2
-open Parseini
-open Inilexer
-
 exception Invalid_section of string
 exception Invalid_element of string
 exception Missing_section of string
@@ -44,7 +39,7 @@ type section_specification = {
 
 type specification = section_specification list
 
-let comment = regexp "^#.*$"
+let comment = Pcre2.regexp "^#.*$"
 
 module Ordstr =
 struct
@@ -81,22 +76,33 @@ let read_inifile file fd tbl =
 	 (fun line -> not (Pcre2.pmatch ~rex:comment line))
 	 fd)
   in
-    try
-      let parsed_file = inifile lexini lxbuf in
-	List.iter
-	  (fun (section, values) ->
-	     Hashtbl.add tbl section
-	       (List.fold_left
-		  (fun tbl (key, value) -> Hashtbl.add tbl key value;tbl)
-		  (Hashtbl.create 10)
-		  values))
-	  parsed_file
-    with
-      | Parsing.Parse_error ->
-        raise (Ini_parse_error (lxbuf.Lexing.lex_curr_p.Lexing.pos_lnum, file))
-      | Failure s when s = "lexing: empty token" ->
-        raise (Ini_parse_error (lxbuf.Lexing.lex_curr_p.Lexing.pos_lnum, file))
-      | otherwise -> raise otherwise
+  let rec loop ~parsed () =
+    match Parseini.inifile Inilexer.lexini lxbuf with
+    | parsed_file ->
+      List.iter
+        (fun (section, values) ->
+          Printf.eprintf "Got section %s\n" section;
+           Hashtbl.add tbl section
+             (List.fold_left
+                (fun tbl (key, value) -> Hashtbl.add tbl key value;tbl)
+                (Hashtbl.create 10)
+                values))
+        parsed_file;
+        Printf.eprintf "Parsed something, recursing\n";
+        loop ~parsed:true (
+    | exception Inilexer.Eof -> (
+        Printf.eprintf "Parsed: %B\n" parsed;
+        match parsed with 
+        | true -> ()
+        | false ->
+            Printf.eprintf "Didn't parse anything before eof\n";
+            raise (Ini_parse_error (lxbuf.Lexing.lex_curr_p.Lexing.pos_lnum, file)))
+    | exception Inilexer.Unexpected
+    | exception Parsing.Parse_error ->
+      raise (Ini_parse_error (lxbuf.Lexing.lex_curr_p.Lexing.pos_lnum, file))
+    | exception otherwise -> raise otherwise
+  in
+  loop ~parsed:false ()
 
 let write_inifile fd tbl =
   Hashtbl.iter

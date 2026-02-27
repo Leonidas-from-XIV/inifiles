@@ -19,21 +19,20 @@
 */
 
 
-%token Newline EOF
+%token Newline
 %token <string> Section
 %token <string * string> Value
-%type <(string * ((string * string) list)) list> inifile
-%start inifile
+%type <string * ((string * string) list)> inifile
+%start once
 %%
 
 values:
   Value Newline values {$1 :: $3}
 | Value Newline {[$1]}
 
-ini:
-  Section Newline values inifile {($1, $3) :: $4}
-| Section Newline values {[($1, $3)]}
+section:
+| Section Newline values {($1, $3)}
 
-inifile:
-  ini EOF {$1}
-| Newline ini EOF {$2}
+once:
+  section {$1}
+| Newline section {$2}

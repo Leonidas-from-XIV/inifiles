@@ -21,6 +21,9 @@
 
 {
   open Parseini
+  exception Eof
+  (* TODO: add loc *)
+  exception Unexpected
 }
 
 let newline = '\n' +
@@ -32,4 +35,5 @@ rule lexini = parse
     whsp '[' whsp (id as id) whsp ']' {Section id}
   | whsp (id as id) whsp '=' whsp (value as value) whsp {Value (id, value)}
   | newline {Newline}
-  | eof {EOF}
+  | eof {raise Eof}
+  | _ {raise Unexpected}

@@ -2,6 +2,7 @@ let () =
   match new Inifiles.inifile "empty_token.ini" with
   | _ ->
     (* parsing should not succeed, fail *)
+    Printf.eprintf "Parsing succeeded but should not have.\n";
     exit 1
   | exception Inifiles.Ini_parse_error (1, "empty_token.ini") ->
     (* we expect it to fail here *)
