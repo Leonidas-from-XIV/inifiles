@@ -1,4 +1,4 @@
 (tests
-  (names empty_token broken_section correct_parse specification)
+  (names empty_token broken_section correct_parse specification newline_sections)
   (libraries inifiles pcre2)
   (deps (glob_files *.ini)))
