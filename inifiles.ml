@@ -76,7 +76,7 @@ let read_inifile file fd tbl =
 	 (fun line -> not (Pcre2.pmatch ~rex:comment line))
 	 fd)
   in
-  let loop () =
+  let rec loop () =
     match Parseini.once Inilexer.lexini lxbuf with
     | (section, values) ->
           Printf.eprintf "Got section %s\n%!" section;
@@ -88,17 +88,18 @@ let read_inifile file fd tbl =
                 (Hashtbl.create 10)
              values);
         Printf.eprintf "Parsed something, recursing\n";
-        (* loop () *)
-    | exception Inilexer.Eof -> (
-      Printf.eprintf "EOF, finishing";
-            raise (Ini_parse_error (lxbuf.Lexing.lex_curr_p.Lexing.pos_lnum, file)))
+        loop ()
+    | exception Inilexer.Eof -> ()
     | exception Inilexer.Unexpected
     | exception Parsing.Parse_error ->
-      raise (Ini_parse_error (lxbuf.Lexing.lex_curr_p.Lexing.pos_lnum, file))
-    | exception otherwise -> raise otherwise
+      let lnum = lxbuf.Lexing.lex_curr_p.Lexing.pos_lnum in
+      Printf.eprintf "Error in line %d\n%!" lnum;
+      raise (Ini_parse_error (lnum, file))
   in
   loop ();
-  ()
+  Hashtbl.iter (fun k _v ->
+    Printf.eprintf "contains key %S\n%!" k) tbl;
+  Printf.eprintf "Done with parsing\n"
 
 let write_inifile fd tbl =
   Hashtbl.iter

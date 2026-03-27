@@ -32,8 +32,13 @@ let id = ['-' '_' ':' '0' - '9' 'A' - 'Z' 'a' - 'z' ] +
 let value = ( [ '\t' ' ' - '~' ] | '\\' newline | '\\' '#' ) +
 
 rule lexini = parse
-    whsp '[' whsp (id as id) whsp ']' {Section id}
-  | whsp (id as id) whsp '=' whsp (value as value) whsp {Value (id, value)}
+    whsp '[' whsp (id as id) whsp ']' {
+      Printf.eprintf "Got section %S\n%!" id;
+      Section id
+}
+  | whsp (id as id) whsp '=' whsp (value as value) whsp {
+    Printf.eprintf "Got value %S = %S\n%!" id value;
+    Value (id, value)}
   | newline {Newline}
   | eof {raise Eof}
   | _ {raise Unexpected}

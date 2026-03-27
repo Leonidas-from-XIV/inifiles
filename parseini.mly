@@ -29,9 +29,10 @@
 values:
   Value Newline values {$1 :: $3}
 | Value Newline {[$1]}
+| Value {[$1]}
 
 section:
-| Section Newline values {($1, $3)}
+  Section Newline values {($1, $3)}
 
 once:
   section {$1}
