@@ -22,7 +22,7 @@
 %token Newline
 %token <string> Section
 %token <string * string> Value
-%type <string * ((string * string) list)> inifile
+%type <string * (string * string) list> once
 %start once
 %%
 
